@@ -4,7 +4,13 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
-app.use(express.static(path.join(__dirname)));
+// This explicitly tells the server to find and show your index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// This serves your other game files (like images or scripts)
+app.use(express.static(__dirname)); 
 
 let players = {};
 
@@ -30,5 +36,3 @@ const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-
-
