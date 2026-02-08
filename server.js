@@ -4,19 +4,16 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
-// This explicitly tells the server to find and show your index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// This serves your other game files (like images or scripts)
 app.use(express.static(__dirname)); 
 
 let players = {};
 
 io.on('connection', (socket) => {
     players[socket.id] = { x: 0, y: 0, z: 0 };
-
     socket.on('move', (data) => {
         if (players[socket.id]) {
             players[socket.id].x = data.x;
@@ -25,7 +22,6 @@ io.on('connection', (socket) => {
             socket.broadcast.emit('playerMoved', { id: socket.id, ...players[socket.id] });
         }
     });
-
     socket.on('disconnect', () => {
         delete players[socket.id];
         io.emit('playerDisconnected', socket.id);
