@@ -13,21 +13,12 @@ io.on('connection', (socket) => {
     });
     socket.on('move', (data) => {
         if(players[socket.id]) {
-            players[socket.id].x = data.x;
-            players[socket.id].y = data.y;
-            players[socket.id].z = data.z;
+            players[socket.id].x = data.x; players[socket.id].y = data.y; players[socket.id].z = data.z;
             socket.broadcast.emit('playerMoved', { id: socket.id, ...data });
         }
     });
-    socket.on('chatMessage', (msg) => {
-        if(players[socket.id]) io.emit('newMessage', { name: players[socket.id].name, text: msg });
-    });
-    socket.on('voiceData', (data) => {
-        socket.broadcast.emit('voiceStream', { id: socket.id, buffer: data });
-    });
-    socket.on('disconnect', () => {
-        delete players[socket.id];
-        io.emit('playerDisconnected', socket.id);
-    });
+    socket.on('chatMessage', (msg) => { if(players[socket.id]) io.emit('newMessage', { name: players[socket.id].name, text: msg }); });
+    socket.on('voiceData', (data) => { socket.broadcast.emit('voiceStream', { id: socket.id, buffer: data }); });
+    socket.on('disconnect', () => { delete players[socket.id]; io.emit('playerDisconnected', socket.id); });
 });
 http.listen(process.env.PORT || 3000);
