@@ -6,18 +6,20 @@
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: #87CEEB; touch-action: none; }
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         #settings-icon { position: absolute; top: 10px; left: 10px; width: 45px; height: 45px; background: rgba(0,0,0,0.6); border-radius: 8px; cursor: pointer; pointer-events: auto; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; border: 2px solid rgba(255,255,255,0.3); }
-        #settings-menu { position: absolute; top: 65px; left: 10px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 10px; display: none; pointer-events: auto; color: white; border: 1px solid #555; width: 200px; }
-        #admin-panel { position: absolute; top: 10px; left: 65px; background: #ff4444; color: white; padding: 10px 15px; border-radius: 5px; pointer-events: auto; font-weight: bold; cursor: pointer; border: none; box-shadow: 0 4px #990000; }
-        #shop-btn { position: absolute; top: 60px; left: 65px; background: #ffcc00; color: black; padding: 10px 15px; border-radius: 5px; pointer-events: auto; font-weight: bold; cursor: pointer; border: none; box-shadow: 0 4px #996600; }
-        #chat-container { position: absolute; bottom: 110px; left: 20px; width: 260px; height: 160px; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; border-radius: 8px; pointer-events: auto; }
+        #settings-menu { position: absolute; top: 65px; left: 10px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 10px; display: none; pointer-events: auto; color: white; border: 1px solid #555; width: 200px; z-index: 20; }
+        #chat-container { position: absolute; top: 65px; left: 10px; width: 260px; height: 160px; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; border-radius: 8px; pointer-events: auto; }
         #chat-messages { flex-grow: 1; overflow-y: auto; color: white; padding: 8px; font-size: 13px; }
         #chat-input { width: 100%; border: none; padding: 10px; background: rgba(255,255,255,0.15); color: white; outline: none; }
+        #admin-panel { position: absolute; top: 10px; left: 65px; background: #ff4444; color: white; padding: 10px 15px; border-radius: 5px; pointer-events: auto; font-weight: bold; cursor: pointer; border: none; box-shadow: 0 4px #990000; }
+        #shop-btn { position: absolute; top: 60px; left: 280px; background: #ffcc00; color: black; padding: 10px 15px; border-radius: 5px; pointer-events: auto; font-weight: bold; cursor: pointer; border: none; box-shadow: 0 4px #996600; }
         #mic-toggle { position: absolute; top: 10px; right: 10px; padding: 8px 12px; background: #dc3545; color: white; border-radius: 5px; pointer-events: auto; cursor: pointer; font-size: 12px; }
-        #joystick-wrapper { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; background: rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; }
-        #joystick-stick { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: white; border-radius: 50%; }
-        #jump-btn { position: absolute; bottom: 40px; right: 40px; width: 85px; height: 85px; background: #28a745; border-radius: 50%; border: 4px solid white; pointer-events: auto; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        #joystick-wrapper { position: absolute; bottom: 40px; left: 40px; width: 160px; height: 160px; background: rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; touch-action: none; }
+        #joystick-stick { position: absolute; top: 45px; left: 45px; width: 70px; height: 70px; background: white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+        #jump-btn { position: absolute; bottom: 40px; right: 40px; width: 100px; height: 100px; background: #28a745; border-radius: 50%; border: 4px solid white; pointer-events: auto; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
         #stage-info { position: absolute; top: 15px; width: 100%; text-align: center; color: white; font-size: 38px; font-weight: 900; text-shadow: 3px 3px #000; }
         #coin-info { position: absolute; top: 70px; width: 100%; text-align: center; color: #ffcc00; font-size: 20px; font-weight: bold; }
+        #admin-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px; display: none; pointer-events: auto; color: white; border: 2px solid #ff4444; text-align: center; width: 250px; }
+        .admin-opt { width: 100%; margin: 5px 0; padding: 10px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         input[type="text"] { padding: 8px; border-radius: 5px; border: 1px solid #444; background: #222; color: white; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
         #save-username { width: 100%; background: #28a745; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; }
     </style>
@@ -31,8 +33,15 @@
             <input type="text" id="username-input" placeholder="Enter Name..." maxlength="20">
             <button id="save-username">SAVE</button>
         </div>
-        <div id="admin-panel">⚡ ADMIN</div>
+        <button id="admin-panel">⚡ ADMIN</button>
         <button id="shop-btn">🛒 SHOP</button>
+        <div id="admin-menu">
+            <h3>ADMIN PANEL</h3>
+            <button class="admin-opt" id="admin-fly">FLY: OFF</button>
+            <button class="admin-opt" id="admin-speed">SPEED: NORMAL</button>
+            <button class="admin-opt" id="admin-tp">TELEPORT TO END</button>
+            <button class="admin-opt" style="background:#666;" onclick="document.getElementById('admin-menu').style.display='none'">CLOSE</button>
+        </div>
         <div id="mic-toggle">Mute Mic</div>
         <div id="chat-container">
             <div id="chat-messages"></div>
@@ -51,7 +60,7 @@
         let velocity = new THREE.Vector3(), canJump = false;
         let joyPos = { x: 0, y: 0 }, isTouchingJoy = false;
         let lastCheckpoint = new THREE.Vector3(0, 5, 0);
-        let currentStage = 1;
+        let moveSpeed = 0.18, isFlying = false;
 
         function createNameTag(name) {
             const canvas = document.createElement('canvas');
@@ -76,10 +85,7 @@
 
             for(let i=0; i<40; i++) {
                 const isCheckpoint = i % 5 === 0;
-                const plat = new THREE.Mesh(
-                    new THREE.BoxGeometry(4.5, 0.7, 4.5), 
-                    new THREE.MeshPhongMaterial({ color: isCheckpoint ? 0x00ffff : (i%2?0x999999:0x228B22) })
-                );
+                const plat = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.7, 4.5), new THREE.MeshPhongMaterial({ color: isCheckpoint ? 0x00ffff : (i%2?0x999999:0x228B22) }));
                 plat.position.set(Math.sin(i*0.5)*3, 0, -i*7);
                 plat.userData = { checkpoint: isCheckpoint, stage: Math.floor(i/5) + 1 };
                 scene.add(plat); platforms.push(plat);
@@ -90,19 +96,26 @@
 
             const stick = document.getElementById('joystick-stick');
             const wrap = document.getElementById('joystick-wrapper');
-            wrap.ontouchstart = () => isTouchingJoy = true;
-            window.ontouchmove = (e) => {
+            const centerX = 80, centerY = 80;
+
+            wrap.addEventListener('touchstart', (e) => { isTouchingJoy = true; }, {passive: false});
+            window.addEventListener('touchmove', (e) => {
                 if(!isTouchingJoy) return;
-                const rect = wrap.getBoundingClientRect();
                 const touch = e.touches[0];
-                let x = touch.clientX - rect.left - 60, y = touch.clientY - rect.top - 60;
-                const dist = Math.min(Math.sqrt(x*x + y*y), 50);
+                const r = wrap.getBoundingClientRect();
+                let x = touch.clientX - r.left - centerX, y = touch.clientY - r.top - centerY;
+                const dist = Math.min(Math.sqrt(x*x + y*y), 60);
                 const angle = Math.atan2(y, x);
-                joyPos.x = Math.cos(angle) * dist / 50; joyPos.y = Math.sin(angle) * dist / 50;
+                joyPos.x = Math.cos(angle) * dist / 60; joyPos.y = Math.sin(angle) * dist / 60;
                 stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
+            }, {passive: false});
+            window.addEventListener('touchend', () => { isTouchingJoy = false; joyPos = {x:0, y:0}; stick.style.transform = 'translate(0,0)'; });
+
+            document.getElementById('jump-btn').ontouchstart = (e) => { 
+                e.preventDefault(); 
+                if(isFlying) myMesh.position.y += 1;
+                else if(canJump) { velocity.y = 0.25; canJump = false; } 
             };
-            window.ontouchend = () => { isTouchingJoy = false; joyPos = {x:0, y:0}; stick.style.transform = 'translate(0,0)'; };
-            document.getElementById('jump-btn').ontouchstart = () => { if(canJump) { velocity.y = 0.25; canJump = false; } };
 
             async function startMic() {
                 try {
@@ -117,24 +130,25 @@
 
             function animate() {
                 requestAnimationFrame(animate);
-                myMesh.position.x += joyPos.x * 0.15; myMesh.position.z += joyPos.y * 0.15;
-                velocity.y -= 0.01; myMesh.position.y += velocity.y;
-
-                let onGround = false;
-                const pBox = new THREE.Box3().setFromObject(myMesh);
-                platforms.forEach(p => {
-                    const platBox = new THREE.Box3().setFromObject(p);
-                    if(pBox.intersectsBox(platBox) && velocity.y <= 0 && myMesh.position.y >= p.position.y) {
-                        myMesh.position.y = p.position.y + 0.85; velocity.y = 0; onGround = true; canJump = true;
-                        if(p.userData.checkpoint) {
-                            lastCheckpoint.set(p.position.x, p.position.y + 5, p.position.z);
-                            currentStage = p.userData.stage;
-                            document.getElementById('stage-info').innerText = "STAGE " + currentStage;
+                myMesh.position.x += joyPos.x * moveSpeed; myMesh.position.z += joyPos.y * moveSpeed;
+                
+                if(!isFlying) {
+                    velocity.y -= 0.01; 
+                    myMesh.position.y += velocity.y;
+                    let pBox = new THREE.Box3().setFromObject(myMesh);
+                    platforms.forEach(p => {
+                        let platBox = new THREE.Box3().setFromObject(p);
+                        if(pBox.intersectsBox(platBox) && velocity.y <= 0 && myMesh.position.y >= p.position.y) {
+                            myMesh.position.y = p.position.y + 0.85; velocity.y = 0; canJump = true;
+                            if(p.userData.checkpoint) {
+                                lastCheckpoint.set(p.position.x, p.position.y + 5, p.position.z);
+                                document.getElementById('stage-info').innerText = "STAGE " + p.userData.stage;
+                            }
                         }
-                    }
-                });
+                    });
+                    if(myMesh.position.y < -15) { myMesh.position.copy(lastCheckpoint); velocity.y = 0; }
+                }
 
-                if(myMesh.position.y < -15) { myMesh.position.copy(lastCheckpoint); velocity.y = 0; }
                 camera.position.lerp(new THREE.Vector3(myMesh.position.x, myMesh.position.y+7, myMesh.position.z+14), 0.1);
                 camera.lookAt(myMesh.position);
                 socket.emit('move', { x: myMesh.position.x, y: myMesh.position.y, z: myMesh.position.z });
@@ -143,18 +157,50 @@
             animate();
         }
 
-        document.getElementById('settings-icon').onclick = () => { const m = document.getElementById('settings-menu'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; };
+        document.getElementById('admin-panel').onclick = () => {
+            const pass = prompt("Enter Admin Password:");
+            if(pass === "Blue@7077") { document.getElementById('admin-menu').style.display = 'block'; }
+            else { alert("Incorrect Password!"); }
+        };
+
+        document.getElementById('admin-fly').onclick = (e) => {
+            isFlying = !isFlying;
+            e.target.innerText = isFlying ? "FLY: ON" : "FLY: OFF";
+            if(!isFlying) velocity.y = 0;
+        };
+
+        document.getElementById('admin-speed').onclick = (e) => {
+            if(moveSpeed === 0.18) { moveSpeed = 0.5; e.target.innerText = "SPEED: FAST"; }
+            else { moveSpeed = 0.18; e.target.innerText = "SPEED: NORMAL"; }
+        };
+
+        document.getElementById('admin-tp').onclick = () => {
+            const endPlat = platforms[platforms.length-1];
+            myMesh.position.set(endPlat.position.x, 5, endPlat.position.z);
+        };
+
+        document.getElementById('settings-icon').onclick = () => {
+            const m = document.getElementById('settings-menu');
+            const c = document.getElementById('chat-container');
+            const isOpen = m.style.display === 'block';
+            m.style.display = isOpen ? 'none' : 'block';
+            c.style.top = isOpen ? '65px' : '180px';
+        };
+
         document.getElementById('save-username').onclick = () => {
             const name = document.getElementById('username-input').value.trim() || 'Guest';
             if(nametag) myMesh.remove(nametag);
             nametag = createNameTag(name); myMesh.add(nametag);
-            socket.emit('join', { name }); document.getElementById('settings-menu').style.display = 'none';
+            socket.emit('join', { name }); 
+            document.getElementById('settings-icon').click();
         };
+
         document.getElementById('mic-toggle').onclick = () => {
             isMuted = !isMuted; if(localStream) localStream.getAudioTracks()[0].enabled = !isMuted;
             document.getElementById('mic-toggle').innerText = isMuted ? "Mute Mic" : "Unmute Mic";
             document.getElementById('mic-toggle').style.background = isMuted ? "#dc3545" : "#28a745";
         };
+
         document.getElementById('chat-input').onkeypress = (e) => { if(e.key === 'Enter' && e.target.value.trim()) { socket.emit('chatMessage', e.target.value); e.target.value = ''; } };
         socket.on('newMessage', d => { const div = document.createElement('div'); div.innerHTML = `<b>${d.name||'Guest'}:</b> ${d.text}`; document.getElementById('chat-messages').appendChild(div); });
         socket.on('voiceStream', d => { new Audio(URL.createObjectURL(new Blob([d.buffer], {type:'audio/webm'}))).play(); });
