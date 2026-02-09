@@ -1,25 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Multiplayer Obby</title>
+    <title>Simple Multiplayer Obby</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: #87CEEB; }
-        #ui { position: absolute; top: 10px; left: 10px; color: white; pointer-events: none; }
-        #chat { position: absolute; bottom: 10px; left: 10px; width: 250px; height: 150px; background: rgba(0,0,0,0.5); color: white; padding: 5px; border-radius: 5px; pointer-events: auto; }
-        #chat-messages { height: 120px; overflow-y: auto; font-size: 14px; }
-        #chat-input { width: 100%; background: none; border: 1px solid white; color: white; outline: none; }
+        body { margin: 0; overflow: hidden; background: #87CEEB; }
+        #ui { position: absolute; top: 10px; left: 10px; font-family: sans-serif; color: white; pointer-events: none; }
     </style>
 </head>
 <body>
-    <div id="ui">
-        <h1>OBBY WORLD</h1>
-        <p>Coins: <span id="coins">0</span></p>
-    </div>
-    <div id="chat">
-        <div id="chat-messages"></div>
-        <input type="text" id="chat-input" placeholder="Press Enter to chat...">
-    </div>
-
+    <div id="ui"><h1>Multiplayer Test</h1><p>WASD to Move</p></div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
@@ -30,46 +19,35 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Lighting
-        const light = new THREE.AmbientLight(0x404040); scene.add(light);
-        const dLight = new THREE.DirectionalLight(0xffffff, 1); dLight.position.set(0, 10, 5); scene.add(dLight);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 10, 7);
+        scene.add(light);
 
-        // Player Cube
-        const geometry = new THREE.BoxGeometry();
-        const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-        const player = new THREE.Mesh(geometry, material);
-        player.position.y = 1;
+        // Ground
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshPhongMaterial({color: 0x228B22}));
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+        // Local Player
+        const player = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshPhongMaterial({color: 0x00ff00}));
+        player.position.y = 0.5;
         scene.add(player);
 
-        // Platforms
-        const platforms = [];
-        for(let i=0; i<10; i++) {
-            const plat = new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 3), new THREE.MeshPhongMaterial({color: 0x999999}));
-            plat.position.set(0, 0, -i * 5);
-            scene.add(plat);
-            platforms.push(plat);
-        }
-
-        camera.position.z = 5;
-        camera.position.y = 5;
-
-        // Movement
+        const others = {};
         const keys = {};
-        window.addEventListener('keydown', e => keys[e.key] = true);
-        window.addEventListener('keyup', e => keys[e.key] = false);
 
-        let otherPlayers = {};
+        window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
+        window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
         function animate() {
             requestAnimationFrame(animate);
-            
-            if(keys['ArrowUp'] || keys['w']) player.position.z -= 0.1;
-            if(keys['ArrowDown'] || keys['s']) player.position.z += 0.1;
-            if(keys['ArrowLeft'] || keys['a']) player.position.x -= 0.1;
-            if(keys['ArrowRight'] || keys['d']) player.position.x += 0.1;
+            if(keys['w']) player.position.z -= 0.1;
+            if(keys['s']) player.position.z += 0.1;
+            if(keys['a']) player.position.x -= 0.1;
+            if(keys['d']) player.position.x += 0.1;
 
-            camera.position.x = player.position.x;
-            camera.position.z = player.position.z + 5;
+            camera.position.set(player.position.x, player.position.y + 5, player.position.z + 10);
             camera.lookAt(player.position);
 
             socket.emit('move', { x: player.position.x, y: player.position.y, z: player.position.z });
@@ -78,26 +56,19 @@
 
         socket.on('currentPlayers', (players) => {
             Object.keys(players).forEach(id => {
-                if(id !== socket.id) {
-                    const p = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xff0000}));
-                    p.position.set(players[id].x, players[id].y, players[id].z);
-                    scene.add(p);
-                    otherPlayers[id] = p;
+                if(id !== socket.id && !others[id]) {
+                    others[id] = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshPhongMaterial({color: 0xff0000}));
+                    scene.add(others[id]);
                 }
             });
         });
 
         socket.on('playerMoved', (data) => {
-            if(otherPlayers[data.id]) {
-                otherPlayers[data.id].position.set(data.x, data.y, data.z);
-            }
+            if(others[data.id]) others[data.id].position.set(data.x, data.y, data.z);
         });
 
         socket.on('playerDisconnected', (id) => {
-            if(otherPlayers[id]) {
-                scene.remove(otherPlayers[id]);
-                delete otherPlayers[id];
-            }
+            if(others[id]) { scene.remove(others[id]); delete others[id]; }
         });
 
         animate();
