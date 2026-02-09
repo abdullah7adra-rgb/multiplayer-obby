@@ -4,8 +4,6 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
-// FIXED: Removed the 'public' path since the folder was deleted.
-// This now serves files directly from your main folder.
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
@@ -24,6 +22,14 @@ io.on('connection', (socket) => {
             players[socket.id].z = data.z;
             socket.broadcast.emit('playerMoved', players[socket.id]);
         }
+    });
+
+    socket.on('start_voice', () => {
+        socket.broadcast.emit('user_speaking', socket.id);
+    });
+
+    socket.on('stop_voice', () => {
+        socket.broadcast.emit('user_stopped', socket.id);
     });
 
     socket.on('disconnect', () => {
