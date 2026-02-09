@@ -13,16 +13,15 @@
         #admin-panel { position: absolute; top: 10px; left: 65px; background: #ff4444; color: white; padding: 10px 15px; border-radius: 5px; pointer-events: auto; font-weight: bold; cursor: pointer; border: none; box-shadow: 0 4px #990000; }
         #shop-btn { position: absolute; top: 10px; left: 180px; background: #ffcc00; color: black; padding: 10px 15px; border-radius: 5px; pointer-events: auto; font-weight: bold; cursor: pointer; border: none; box-shadow: 0 4px #996600; }
         #joystick-wrapper { position: absolute; bottom: 40px; left: 40px; width: 240px; height: 240px; background: rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; touch-action: none; }
-        #joystick-stick { position: absolute; top: 60px; left: 60px; width: 120px; height: 120px; background: white; border-radius: 50%; box-shadow: 0 0 15px rgba(0,0,0,0.3); }
+        #joystick-stick { position: absolute; top: 60px; left: 60px; width: 120px; height: 120px; background: white; border-radius: 50%; box-shadow: 0 0 15px rgba(0,0,0,0.3); pointer-events: none; }
         #jump-btn { position: absolute; bottom: 40px; right: 40px; width: 120px; height: 120px; background: #28a745; border-radius: 50%; border: 4px solid white; pointer-events: auto; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; }
         #stage-info { position: absolute; top: 15px; width: 100%; text-align: center; color: white; font-size: 38px; font-weight: 900; text-shadow: 3px 3px #000; }
         #coin-info { position: absolute; top: 70px; width: 100%; text-align: center; color: #ffcc00; font-size: 24px; font-weight: bold; }
-        #admin-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); padding: 25px; border-radius: 12px; display: none; pointer-events: auto; color: white; border: 2px solid #ff4444; width: 380px; z-index: 100; text-align: center; }
+        #admin-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); padding: 25px; border-radius: 12px; display: none; pointer-events: auto; color: white; border: 2px solid #ff4444; width: 380px; z-index: 100; text-align: center; max-height: 80vh; overflow-y: auto; }
         .menu-opt { width: 100%; margin: 8px 0; padding: 12px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        #cmd-row { display: flex; gap: 5px; margin-bottom: 15px; }
-        #cmd-box { flex-grow: 1; padding: 10px; background: #111; color: #0f0; border: 1px solid #444; border-radius: 4px; font-family: monospace; }
-        #cmd-run { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        #carpet { display: none; position: absolute; width: 3px; height: 3px; background: #ff00ff; }
+        #cmd-row { display: flex; gap: 5px; margin-bottom: 10px; }
+        #cmd-box, #new-cmd-box { flex-grow: 1; padding: 10px; background: #111; color: #0f0; border: 1px solid #444; border-radius: 4px; font-family: monospace; }
+        #cmd-run, #add-cmd-btn { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -33,18 +32,16 @@
         <div id="settings-menu">
             <input type="text" id="username-input" placeholder="Username" maxlength="20">
             <button id="save-username">SAVE</button>
+            <button onclick="exportSave()" style="margin-top:10px; width:100%;">EXPORT DATA</button>
+            <button onclick="importSave()" style="margin-top:5px; width:100%;">IMPORT DATA</button>
         </div>
         <button id="admin-panel">⚡ ADMIN</button>
         <button id="shop-btn">🛒 SHOP</button>
         <div id="admin-menu">
             <h3 style="color:#ff4444">SUPER ADMIN CONSOLE</h3>
-            <div id="cmd-row">
-                <input type="text" id="cmd-box" placeholder="give [user] [item] [amount]...">
-                <button id="cmd-run">RUN</button>
-            </div>
+            <div id="cmd-row"><input type="text" id="cmd-box" placeholder="Run command..."><button id="cmd-run">RUN</button></div>
+            <div id="cmd-row" style="border-top: 1px solid #444; padding-top: 10px;"><input type="text" id="new-cmd-box" placeholder="Add: [keyword]:[action]"><button id="add-cmd-btn">ADD</button></div>
             <button class="menu-opt" id="admin-fly">FLY: OFF</button>
-            <button class="menu-opt" id="admin-grav">LOW GRAVITY: OFF</button>
-            <button class="menu-opt" id="admin-day">TIME: DAY</button>
             <button class="menu-opt" style="background:#cc0000;" onclick="this.parentElement.style.display='none'">CLOSE</button>
         </div>
         <div id="chat-container">
@@ -54,18 +51,48 @@
         <div id="joystick-wrapper"><div id="joystick-stick"></div></div>
         <div id="jump-btn">JUMP</div>
     </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         const socket = io();
-        let scene, camera, renderer, myMesh, nametag, carpetObj;
+        let scene, camera, renderer, myMesh, nametag;
         let players = {}, platforms = [];
         let velocity = new THREE.Vector3(), canJump = false;
         let joyPos = { x: 0, y: 0 }, isTouchingJoy = false;
         let lastCheckpoint = new THREE.Vector3(0, 5, 0);
-        let coins = 0, moveSpeed = 0.18, isFlying = false, gravity = -0.01;
-        let camRotation = { x: 0, y: 0 }, isPanning = false, visited = new Set();
-        let hasAdminAccess = false;
+        
+        let coins = parseInt(localStorage.getItem('coins')) || 0;
+        let currentStage = parseInt(localStorage.getItem('stage')) || 1;
+        let visited = new Set(JSON.parse(localStorage.getItem('visited')) || []);
+        let customCommands = JSON.parse(localStorage.getItem('customCmds')) || {};
+
+        let moveSpeed = 0.18, isFlying = false, gravity = -0.01;
+        let camRotation = { x: 0, y: 0 }, isPanning = false;
+
+        function saveProgress() {
+            localStorage.setItem('coins', coins);
+            localStorage.setItem('stage', currentStage);
+            localStorage.setItem('visited', JSON.stringify(Array.from(visited)));
+            localStorage.setItem('customCmds', JSON.stringify(customCommands));
+        }
+
+        function exportSave() {
+            const data = btoa(JSON.stringify({ coins, currentStage, visited: Array.from(visited), customCommands }));
+            prompt("Copy your save code:", data);
+        }
+
+        function importSave() {
+            const code = prompt("Paste your save code:");
+            if(code) {
+                try {
+                    const data = JSON.parse(atob(code));
+                    coins = data.coins; currentStage = data.currentStage;
+                    visited = new Set(data.visited); customCommands = data.customCommands;
+                    saveProgress(); location.reload();
+                } catch(e) { alert("Invalid code!"); }
+            }
+        }
 
         function createNameTag(name) {
             const canvas = document.createElement('canvas');
@@ -94,39 +121,33 @@
                 plat.position.set(Math.sin(i*0.5)*4, 0, -i*8);
                 plat.userData = { id: i, checkpoint: isCheck, stage: Math.floor(i/5)+1 };
                 scene.add(plat); platforms.push(plat);
+                if(isCheck && plat.userData.stage === currentStage) lastCheckpoint.copy(plat.position).y += 5;
             }
 
             myMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshPhongMaterial({ color: 0x00ff00 }));
             myMesh.position.copy(lastCheckpoint); scene.add(myMesh);
-
-            carpetObj = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 3), new THREE.MeshPhongMaterial({color: 0xff00ff}));
-            carpetObj.visible = false; scene.add(carpetObj);
+            document.getElementById('coin-val').innerText = coins;
+            document.getElementById('stage-info').innerText = "STAGE " + currentStage;
 
             const wrap = document.getElementById('joystick-wrapper');
             const stick = document.getElementById('joystick-stick');
+            
             wrap.addEventListener('touchstart', (e) => { isTouchingJoy = true; e.preventDefault(); }, {passive: false});
             window.addEventListener('touchmove', (e) => {
                 if(!isTouchingJoy) return;
                 const r = wrap.getBoundingClientRect();
                 const touch = e.touches[0];
                 let dx = touch.clientX - (r.left + 120), dy = touch.clientY - (r.top + 120);
-                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 100);
                 const angle = Math.atan2(dy, dx);
-                joyPos.x = Math.cos(angle) * dist / 100; joyPos.y = Math.sin(angle) * dist / 100;
-                stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
+                const visualDist = Math.min(Math.sqrt(dx*dx + dy*dy), 100); 
+                joyPos.x = (dx / 120); joyPos.y = (dy / 120);
+                stick.style.transform = `translate(${Math.cos(angle)*visualDist}px, ${Math.sin(angle)*visualDist}px)`;
             }, {passive: false});
             window.addEventListener('touchend', () => { isTouchingJoy = false; joyPos = {x:0, y:0}; stick.style.transform = 'translate(0,0)'; });
 
             window.addEventListener('touchstart', (e) => { if(e.touches[0].clientX > window.innerWidth/2) isPanning = true; });
-            window.addEventListener('touchmove', (e) => {
-                if(isPanning && e.touches.length === 1) {
-                    camRotation.y -= e.movementX * 0.005;
-                    camRotation.x = Math.max(-1.2, Math.min(1.2, camRotation.x - e.movementY * 0.005));
-                }
-            });
+            window.addEventListener('touchmove', (e) => { if(isPanning && e.touches.length === 1) { camRotation.y -= e.movementX * 0.005; camRotation.x = Math.max(-1.2, Math.min(1.2, camRotation.x - e.movementY * 0.005)); } });
             window.addEventListener('touchend', () => isPanning = false);
-
-            document.getElementById('jump-btn').ontouchstart = (e) => { e.preventDefault(); if(isFlying) myMesh.position.y += 1.5; else if(canJump) { velocity.y = 0.25; canJump = false; } };
 
             function animate() {
                 requestAnimationFrame(animate);
@@ -135,12 +156,6 @@
                 myMesh.position.add(forward.multiplyScalar(-joyPos.y * moveSpeed));
                 myMesh.position.add(right.multiplyScalar(joyPos.x * moveSpeed));
                 
-                if(carpetObj.visible) {
-                    carpetObj.position.copy(myMesh.position);
-                    carpetObj.position.y -= 0.6;
-                    carpetObj.rotation.y = camRotation.y;
-                }
-
                 if(!isFlying) {
                     velocity.y += gravity; myMesh.position.y += velocity.y;
                     let pBox = new THREE.Box3().setFromObject(myMesh);
@@ -151,19 +166,20 @@
                             if(!visited.has(p.userData.id)) {
                                 visited.add(p.userData.id); coins += p.userData.checkpoint ? 50 : 5;
                                 document.getElementById('coin-val').innerText = coins;
+                                saveProgress();
                             }
                             if(p.userData.checkpoint) {
+                                currentStage = p.userData.stage;
                                 lastCheckpoint.set(p.position.x, p.position.y + 5, p.position.z);
-                                document.getElementById('stage-info').innerText = "STAGE " + p.userData.stage;
+                                document.getElementById('stage-info').innerText = "STAGE " + currentStage;
+                                saveProgress();
                             }
                         }
                     });
                     if(myMesh.position.y < -20) { myMesh.position.copy(lastCheckpoint); velocity.y = 0; }
                 }
-
                 const camOffset = new THREE.Vector3(0, 7, 15).applyAxisAngle(new THREE.Vector3(1,0,0), camRotation.x).applyAxisAngle(new THREE.Vector3(0,1,0), camRotation.y);
-                camera.position.copy(myMesh.position).add(camOffset);
-                camera.lookAt(myMesh.position);
+                camera.position.copy(myMesh.position).add(camOffset); camera.lookAt(myMesh.position);
                 socket.emit('move', { x: myMesh.position.x, y: myMesh.position.y, z: myMesh.position.z });
                 renderer.render(scene, camera);
             }
@@ -171,53 +187,37 @@
         }
 
         document.getElementById('cmd-run').onclick = () => {
-            const raw = document.getElementById('cmd-box').value;
-            const cmd = raw.toLowerCase();
+            const cmd = document.getElementById('cmd-box').value.toLowerCase();
+            if(customCommands[cmd]) { try { eval(customCommands[cmd]); } catch(e){ alert("Error in custom cmd"); } }
+            if(cmd.includes("fly")) isFlying = !isFlying;
+            if(cmd.includes("coin")) { coins += 5000; saveProgress(); document.getElementById('coin-val').innerText = coins; }
             if(cmd.startsWith("give ")) {
-                const parts = raw.split(" ");
+                const parts = document.getElementById('cmd-box').value.split(" ");
                 socket.emit('adminCommand', { type: 'give', target: parts[1], item: parts[2], amount: parts[3] });
             }
-            if(cmd.includes("ban")) socket.emit('adminCommand', { type: 'ban', target: cmd.split("ban ")[1] });
-            if(cmd.includes("fly")) isFlying = !isFlying;
-            if(cmd.includes("gravity")) gravity = gravity === -0.01 ? -0.003 : -0.01;
-            if(cmd.includes("carpet")) carpetObj.visible = !carpetObj.visible;
-            if(cmd.includes("kickall")) socket.emit('adminCommand', { type: 'kickall' });
             document.getElementById('cmd-box').value = "";
         };
 
-        socket.on('receive_item', (data) => {
-            if(data.item === 'coins') {
-                coins = data.amount === 'infinite' ? 9999999 : coins + parseInt(data.amount);
-                document.getElementById('coin-val').innerText = coins;
+        document.getElementById('add-cmd-btn').onclick = () => {
+            const input = document.getElementById('new-cmd-box').value;
+            const [keyword, action] = input.split(":");
+            if(keyword && action) {
+                customCommands[keyword.trim().toLowerCase()] = action.trim();
+                saveProgress();
+                alert(`Command '${keyword}' added!`);
             }
-            if(data.item === 'admin') hasAdminAccess = true;
-            if(data.item === 'carpet') carpetObj.visible = true;
-        });
-
-        document.getElementById('admin-panel').onclick = () => {
-            if(hasAdminAccess || prompt("Admin Password:") === "Blue@7077") {
-                hasAdminAccess = true;
-                document.getElementById('admin-menu').style.display='block';
-            }
+            document.getElementById('new-cmd-box').value = "";
         };
 
-        document.getElementById('admin-fly').onclick = (e) => { isFlying = !isFlying; e.target.innerText = "FLY: " + (isFlying?"ON":"OFF"); };
-        document.getElementById('admin-grav').onclick = (e) => { gravity = gravity === -0.01 ? -0.003 : -0.01; e.target.innerText = "LOW GRAVITY: " + (gravity > -0.005 ? "ON" : "OFF"); };
-        document.getElementById('admin-day').onclick = (e) => { 
-            const isDay = scene.background.getHex() === 0x87CEEB;
-            scene.background.setHex(isDay ? 0x000022 : 0x87CEEB);
-            e.target.innerText = "TIME: " + (isDay ? "NIGHT" : "DAY");
-        };
-
-        document.getElementById('settings-icon').onclick = () => { let m = document.getElementById('settings-menu'), c = document.getElementById('chat-container'), open = m.style.display==='block'; m.style.display=open?'none':'block'; c.style.top=open?'65px':'180px'; };
-        document.getElementById('save-username').onclick = () => { let n = document.getElementById('username-input').value.trim() || 'Guest'; if(nametag) myMesh.remove(nametag); nametag=createNameTag(n); myMesh.add(nametag); socket.emit('join', {name:n}); document.getElementById('settings-icon').click(); };
-        document.getElementById('chat-input').onkeypress = (e) => { if(e.key==='Enter' && e.target.value.trim()){ socket.emit('chatMessage', e.target.value); e.target.value=''; } };
+        document.getElementById('admin-panel').onclick = () => { if(prompt("Admin Password:") === "Blue@7077") document.getElementById('admin-menu').style.display='block'; };
+        document.getElementById('jump-btn').ontouchstart = (e) => { e.preventDefault(); if(isFlying) myMesh.position.y += 1.5; else if(canJump) { velocity.y = 0.25; canJump = false; } };
+        document.getElementById('settings-icon').onclick = () => { let m = document.getElementById('settings-menu'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; };
+        document.getElementById('save-username').onclick = () => { let n = document.getElementById('username-input').value.trim() || 'Guest'; if(nametag) myMesh.remove(nametag); nametag=createNameTag(n); myMesh.add(nametag); socket.emit('join', {name:n}); };
         
-        socket.on('banned', () => { alert("Kicked/Banned!"); window.location.reload(); });
-        socket.on('newMessage', d => { let div=document.createElement('div'); div.innerHTML=`<b>${d.name||'Guest'}:</b> ${d.text}`; let b=document.getElementById('chat-messages'); b.appendChild(div); b.scrollTop=b.scrollHeight; });
-        socket.on('currentPlayers', ps => { Object.keys(ps).forEach(id => { if(!players[id] && id!==socket.id){ players[id]=new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhongMaterial({color:0xff3333})); players[id].add(createNameTag(ps[id].name||'Guest')); scene.add(players[id]); } }); });
         socket.on('playerMoved', d => { if(players[d.id]) players[d.id].position.set(d.x, d.y, d.z); });
+        socket.on('currentPlayers', ps => { Object.keys(ps).forEach(id => { if(!players[id] && id!==socket.id){ players[id]=new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhongMaterial({color:0xff3333})); players[id].add(createNameTag(ps[id].name||'Guest')); scene.add(players[id]); } }); });
         socket.on('playerDisconnected', id => { if(players[id]){ scene.remove(players[id]); delete players[id]; } });
+
         init();
     </script>
 </body>
