@@ -4,16 +4,19 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
-// This tells the server to show the files in the 'public' folder
-app.use(express.static(path.join(__dirname, 'public')));
+// FIXED: Removed the 'public' path since the folder was deleted.
+// This now serves files directly from your main folder.
+app.use(express.static(__dirname));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 let players = {};
 
 io.on('connection', (socket) => {
-    // When a new player joins
     players[socket.id] = { x: 0, y: 0, z: 0, id: socket.id };
     
-    // Broadcast movement data to everyone
     socket.on('move', (data) => {
         if (players[socket.id]) {
             players[socket.id].x = data.x;
@@ -23,7 +26,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Clean up when someone leaves
     socket.on('disconnect', () => {
         delete players[socket.id];
         io.emit('playerDisconnected', socket.id);
