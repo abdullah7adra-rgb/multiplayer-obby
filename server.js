@@ -10,22 +10,17 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-let players = {};
-
 io.on('connection', (socket) => {
-    players[socket.id] = { id: socket.id };
-
     socket.on('move', (data) => {
         socket.broadcast.emit('playerMoved', { id: socket.id, ...data });
     });
 
-    // RELAY AUDIO: Receive chunk from speaker and send to everyone else
-    socket.on('audio_chunk', (chunk) => {
-        socket.broadcast.emit('audio_stream', { id: socket.id, chunk: chunk });
+    // Audio relay
+    socket.on('audio_data', (data) => {
+        socket.broadcast.emit('audio_stream', data);
     });
 
     socket.on('disconnect', () => {
-        delete players[socket.id];
         io.emit('playerDisconnected', socket.id);
     });
 });
