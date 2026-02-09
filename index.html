@@ -5,106 +5,72 @@
     <style>
         body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: #87CEEB; }
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        #login-ui { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            background: rgba(0,0,0,0.9); color: white; padding: 30px; border-radius: 10px; 
-            text-align: center; pointer-events: auto; border: 2px solid #444;
-        }
-        #chat-container { 
-            position: absolute; bottom: 20px; left: 20px; width: 300px; height: 180px; 
-            background: rgba(0,0,0,0.5); display: none; flex-direction: column; 
-            border-radius: 5px; pointer-events: auto;
-        }
-        #chat-messages { flex-grow: 1; overflow-y: auto; color: white; padding: 10px; font-size: 13px; text-align: left; }
-        #chat-input { width: 100%; border: none; padding: 8px; box-sizing: border-box; background: rgba(255,255,255,0.2); color: white; outline: none; }
-        #mic-controls { position: absolute; top: 10px; right: 10px; pointer-events: auto; display: none; }
-        .btn { padding: 10px 15px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
-        #start-btn { background: #28a745; color: white; }
-        #mute-btn { background: #dc3545; color: white; font-size: 12px; }
-        .muted { background: #6c757d !important; }
-        input[type="text"] { padding: 10px; width: 200px; border-radius: 5px; border: 1px solid #555; margin-bottom: 10px; }
-        #mobile-controls { position: absolute; bottom: 30px; width: 100%; display: none; justify-content: space-between; padding: 0 50px; box-sizing: border-box; pointer-events: none; }
-        .joy-btn { width: 80px; height: 80px; background: rgba(255,255,255,0.3); border-radius: 50%; border: 4px solid white; pointer-events: auto; color: white; font-weight: bold; }
+        #settings-icon { position: absolute; top: 10px; left: 10px; width: 45px; height: 45px; background: rgba(0,0,0,0.6); border-radius: 8px; cursor: pointer; pointer-events: auto; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; border: 2px solid rgba(255,255,255,0.3); }
+        #settings-menu { position: absolute; top: 65px; left: 10px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 10px; display: none; pointer-events: auto; color: white; border: 1px solid #555; width: 200px; }
+        #admin-panel { position: absolute; top: 10px; left: 65px; background: #ff4444; color: white; padding: 10px 15px; border-radius: 5px; pointer-events: auto; font-weight: bold; cursor: pointer; border: none; box-shadow: 0 4px #990000; }
+        #shop-btn { position: absolute; top: 60px; left: 65px; background: #ffcc00; color: black; padding: 10px 15px; border-radius: 5px; pointer-events: auto; font-weight: bold; cursor: pointer; border: none; box-shadow: 0 4px #996600; }
+        #chat-container { position: absolute; bottom: 110px; left: 20px; width: 260px; height: 160px; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; border-radius: 8px; pointer-events: auto; border: 1px solid rgba(255,255,255,0.1); }
+        #chat-messages { flex-grow: 1; overflow-y: auto; color: white; padding: 8px; font-size: 13px; text-shadow: 1px 1px #000; }
+        #chat-input { width: 100%; border: none; padding: 10px; background: rgba(255,255,255,0.15); color: white; outline: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+        #mic-toggle { position: absolute; top: 10px; right: 10px; padding: 8px 12px; background: #dc3545; color: white; border-radius: 5px; pointer-events: auto; cursor: pointer; font-size: 12px; font-weight: bold; }
+        #mobile-controls { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: space-between; padding: 0 40px; box-sizing: border-box; pointer-events: none; }
+        .joy-btn { width: 85px; height: 85px; background: rgba(255,255,255,0.3); border-radius: 50%; border: 4px solid white; pointer-events: auto; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; text-shadow: 1px 1px #000; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+        #stage-info { position: absolute; top: 15px; width: 100%; text-align: center; color: white; font-size: 38px; font-weight: 900; text-shadow: 3px 3px #000; letter-spacing: 2px; }
+        #coin-info { position: absolute; top: 70px; width: 100%; text-align: center; color: #ffcc00; font-size: 20px; font-weight: bold; text-shadow: 2px 2px #000; }
+        input[type="text"] { padding: 8px; border-radius: 5px; border: 1px solid #444; background: #222; color: white; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        #save-username { width: 100%; background: #28a745; color: white; border: none; padding: 8px; border-radius: 5px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="ui-layer">
-        <div id="login-ui">
-            <h2>Multiplayer Obby</h2>
-            <input type="text" id="username-input" placeholder="Enter Username" maxlength="20">
-            <br>
-            <button id="start-btn" class="btn">Join & Enable Mic</button>
-            <div id="error-msg" style="color: #ff4444; margin-top: 10px;"></div>
+        <div id="stage-info">STAGE 11</div>
+        <div id="coin-info">💰 Coins: 185</div>
+        <div id="settings-icon">⚙️</div>
+        <div id="settings-menu">
+            <label style="font-size: 12px; display: block; margin-bottom: 5px;">PLAYER NAME:</label>
+            <input type="text" id="username-input" placeholder="Enter Name..." maxlength="20">
+            <button id="save-username">SAVE SETTINGS</button>
         </div>
-        <div id="mic-controls"><button id="mute-btn" class="btn">Mute Mic</button></div>
+        <div id="admin-panel">⚡ ADMIN</div>
+        <button id="shop-btn">🛒 SHOP</button>
+        <div id="mic-toggle">Mute Mic</div>
         <div id="chat-container">
             <div id="chat-messages"></div>
-            <input type="text" id="chat-input" placeholder="Press Enter to chat...">
+            <input type="text" id="chat-input" placeholder="Tap to chat...">
         </div>
         <div id="mobile-controls">
-            <div id="joystick" class="joy-btn" style="display:flex; align-items:center; justify-content:center;">MOVE</div>
-            <button id="jump-btn" class="joy-btn">JUMP</button>
+            <div id="move-btn" class="joy-btn">MOVE</div>
+            <div id="jump-btn" class="joy-btn">JUMP</div>
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         const socket = io();
-        let scene, camera, renderer, myMesh;
+        let scene, camera, renderer, myMesh, nametag;
         let players = {};
-        let localStream, mediaRecorder, isMuted = false;
-        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, canJump = true;
-        let velocity = new THREE.Vector3();
-
-        document.getElementById('start-btn').onclick = async () => {
-            const name = document.getElementById('username-input').value.trim();
-            if (name.length < 3 || name.length > 20) return;
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(localStream);
-                mediaRecorder.ondataavailable = (e) => {
-                    if (!isMuted && e.data.size > 0) socket.emit('voiceData', e.data);
-                };
-                mediaRecorder.start(100);
-                socket.emit('checkUsername', name);
-            } catch (err) { alert("Mic required!"); }
-        };
-
-        const muteBtn = document.getElementById('mute-btn');
-        muteBtn.onclick = () => {
-            isMuted = !isMuted;
-            localStream.getAudioTracks()[0].enabled = !isMuted;
-            muteBtn.innerText = isMuted ? "Unmute Mic" : "Mute Mic";
-            muteBtn.classList.toggle('muted', isMuted);
-        };
-
-        socket.on('usernameResult', (data) => {
-            if (data.success) {
-                document.getElementById('login-ui').style.display = 'none';
-                document.getElementById('chat-container').style.display = 'flex';
-                document.getElementById('mic-controls').style.display = 'block';
-                document.getElementById('mobile-controls').style.display = 'flex';
-                initGame(data.name);
-            }
-        });
+        let localStream, mediaRecorder, isMuted = true;
+        let moveForward = false, velocityY = 0, isJumping = false;
 
         function createNameTag(name) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 256; canvas.height = 64;
+            canvas.width = 512; canvas.height = 128;
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 40px Arial';
+            ctx.font = 'bold 80px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(name, 128, 45);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 6;
+            ctx.strokeText(name, 256, 90);
+            ctx.fillText(name, 256, 90);
             const texture = new THREE.CanvasTexture(canvas);
-            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
-            const sprite = new THREE.Sprite(spriteMaterial);
-            sprite.scale.set(2, 0.5, 1);
-            sprite.position.y = 1.2;
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture }));
+            sprite.scale.set(3, 0.75, 1);
+            sprite.position.y = 1.3;
             return sprite;
         }
 
-        function initGame(username) {
+        function init() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -113,101 +79,117 @@
             document.body.appendChild(renderer.domElement);
 
             const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(5, 10, 7.5);
+            light.position.set(10, 20, 10);
             scene.add(light);
-            scene.add(new THREE.AmbientLight(0x404040));
+            scene.add(new THREE.AmbientLight(0x606060));
 
-            for(let i=0; i<20; i++) {
-                const pGeo = new THREE.BoxGeometry(3, 0.5, 3);
-                const pMat = new THREE.MeshPhongMaterial({ color: i % 2 === 0 ? 0x808080 : 0x228B22 });
-                const plat = new THREE.Mesh(pGeo, pMat);
-                plat.position.set(0, 0, -i * 5);
+            for(let i=0; i<40; i++) {
+                const plat = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.7, 4.5), new THREE.MeshPhongMaterial({ color: i%2?0x999999:0x228B22 }));
+                plat.position.set(Math.sin(i*0.5)*3, 0, -i*7);
                 scene.add(plat);
             }
 
-            const geo = new THREE.BoxGeometry();
-            const mat = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-            myMesh = new THREE.Mesh(geo, mat);
-            myMesh.add(createNameTag(username));
+            myMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshPhongMaterial({ color: 0x00ff00 }));
             scene.add(myMesh);
+            
+            camera.position.set(0, 6, 12);
 
-            camera.position.set(0, 5, 10);
-
-            document.addEventListener('keydown', (e) => {
-                if(e.code === 'KeyW') moveForward = true;
-                if(e.code === 'KeyS') moveBackward = true;
-                if(e.code === 'KeyA') moveLeft = true;
-                if(e.code === 'KeyD') moveRight = true;
-                if(e.code === 'Space' && canJump) { velocity.y = 0.2; canJump = false; }
-            });
-
-            document.addEventListener('keyup', (e) => {
-                if(e.code === 'KeyW') moveForward = false;
-                if(e.code === 'KeyS') moveBackward = false;
-                if(e.code === 'KeyA') moveLeft = false;
-                if(e.code === 'KeyD') moveRight = false;
-            });
+            async function startMic() {
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    localStream.getAudioTracks()[0].enabled = false;
+                    mediaRecorder = new MediaRecorder(localStream);
+                    mediaRecorder.ondataavailable = (e) => { if(!isMuted) socket.emit('voiceData', e.data); };
+                    mediaRecorder.start(150);
+                } catch(e) {}
+            }
+            startMic();
 
             function animate() {
                 requestAnimationFrame(animate);
-                if(moveForward) myMesh.position.z -= 0.1;
-                if(moveBackward) myMesh.position.z += 0.1;
-                if(moveLeft) myMesh.position.x -= 0.1;
-                if(moveRight) myMesh.position.x += 0.1;
+                if(moveForward) myMesh.position.z -= 0.18;
                 
-                myMesh.position.y += velocity.y;
-                if(myMesh.position.y > 0) velocity.y -= 0.01;
-                else { myMesh.position.y = 0; velocity.y = 0; canJump = true; }
+                if(isJumping) {
+                    myMesh.position.y += velocityY;
+                    velocityY -= 0.012;
+                    if(myMesh.position.y <= 0) {
+                        myMesh.position.y = 0;
+                        isJumping = false;
+                    }
+                }
 
-                camera.position.lerp(new THREE.Vector3(myMesh.position.x, myMesh.position.y + 5, myMesh.position.z + 10), 0.1);
-                camera.lookAt(myMesh.position);
+                camera.position.lerp(new THREE.Vector3(myMesh.position.x, myMesh.position.y+7, myMesh.position.z+14), 0.08);
+                camera.lookAt(myMesh.position.x, myMesh.position.y + 1, myMesh.position.z);
                 
                 socket.emit('move', { x: myMesh.position.x, y: myMesh.position.y, z: myMesh.position.z });
                 renderer.render(scene, camera);
             }
             animate();
-            socket.emit('join', { name: username });
         }
 
-        const chatInput = document.getElementById('chat-input');
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && chatInput.value.trim()) {
-                socket.emit('chatMessage', chatInput.value);
-                chatInput.value = '';
+        document.getElementById('settings-icon').onclick = () => {
+            const m = document.getElementById('settings-menu');
+            m.style.display = m.style.display === 'block' ? 'none' : 'block';
+        };
+
+        document.getElementById('save-username').onclick = () => {
+            const name = document.getElementById('username-input').value.trim() || 'Guest';
+            if(nametag) myMesh.remove(nametag);
+            nametag = createNameTag(name);
+            myMesh.add(nametag);
+            socket.emit('join', { name });
+            document.getElementById('settings-menu').style.display = 'none';
+        };
+
+        document.getElementById('mic-toggle').onclick = () => {
+            isMuted = !isMuted;
+            if(localStream) localStream.getAudioTracks()[0].enabled = !isMuted;
+            document.getElementById('mic-toggle').innerText = isMuted ? "Mute Mic" : "Unmute Mic";
+            document.getElementById('mic-toggle').style.background = isMuted ? "#dc3545" : "#28a745";
+        };
+
+        document.getElementById('move-btn').ontouchstart = (e) => { e.preventDefault(); moveForward = true; };
+        document.getElementById('move-btn').ontouchend = () => moveForward = false;
+        document.getElementById('jump-btn').ontouchstart = (e) => { 
+            e.preventDefault();
+            if(!isJumping) { isJumping = true; velocityY = 0.25; } 
+        };
+
+        document.getElementById('chat-input').onkeypress = (e) => {
+            if(e.key === 'Enter' && e.target.value.trim()) {
+                socket.emit('chatMessage', e.target.value);
+                e.target.value = '';
             }
-        });
+        };
 
-        socket.on('newMessage', (data) => {
+        socket.on('newMessage', d => {
             const div = document.createElement('div');
-            div.innerHTML = `<b>${data.name}:</b> ${data.text}`;
-            document.getElementById('chat-messages').appendChild(div);
+            div.innerHTML = `<span style="color:#00ff00; font-weight:bold;">${d.name||'Guest'}:</span> ${d.text}`;
+            const box = document.getElementById('chat-messages');
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
         });
 
-        socket.on('voiceStream', (data) => {
-            const blob = new Blob([data.buffer], { type: 'audio/webm' });
-            new Audio(URL.createObjectURL(blob)).play();
+        socket.on('voiceStream', d => {
+            const audio = new Audio(URL.createObjectURL(new Blob([d.buffer], {type:'audio/webm'})));
+            audio.play();
         });
 
-        socket.on('currentPlayers', (serverPlayers) => {
-            Object.keys(serverPlayers).forEach(id => {
-                if (!players[id] && id !== socket.id) {
-                    const pMesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhongMaterial({ color: 0xff0000 }));
-                    pMesh.add(createNameTag(serverPlayers[id].name));
-                    scene.add(pMesh);
-                    players[id] = pMesh;
+        socket.on('currentPlayers', ps => {
+            Object.keys(ps).forEach(id => {
+                if(!players[id] && id !== socket.id) {
+                    players[id] = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhongMaterial({color:0xff3333}));
+                    players[id].add(createNameTag(ps[id].name||'Guest'));
+                    scene.add(players[id]);
                 }
             });
         });
 
-        socket.on('playerMoved', (data) => {
-            if(players[data.id]) {
-                players[data.id].position.set(data.x, data.y, data.z);
-            }
-        });
+        socket.on('playerMoved', d => { if(players[d.id]) players[d.id].position.set(d.x, d.y, d.z); });
+        socket.on('playerDisconnected', id => { if(players[id]) { scene.remove(players[id]); delete players[id]; } });
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
 
-        socket.on('playerDisconnected', (id) => {
-            if (players[id]) { scene.remove(players[id]); delete players[id]; }
-        });
+        init();
     </script>
 </body>
 </html>
