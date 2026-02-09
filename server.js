@@ -13,23 +13,15 @@ app.get('/', (req, res) => {
 let players = {};
 
 io.on('connection', (socket) => {
-    players[socket.id] = { x: 0, y: 0, z: 0, id: socket.id };
-    
+    players[socket.id] = { id: socket.id };
+
     socket.on('move', (data) => {
-        if (players[socket.id]) {
-            players[socket.id].x = data.x;
-            players[socket.id].y = data.y;
-            players[socket.id].z = data.z;
-            socket.broadcast.emit('playerMoved', players[socket.id]);
-        }
+        socket.broadcast.emit('playerMoved', { id: socket.id, ...data });
     });
 
-    socket.on('start_voice', () => {
-        socket.broadcast.emit('user_speaking', socket.id);
-    });
-
-    socket.on('stop_voice', () => {
-        socket.broadcast.emit('user_stopped', socket.id);
+    // RELAY AUDIO: Receive chunk from speaker and send to everyone else
+    socket.on('audio_chunk', (chunk) => {
+        socket.broadcast.emit('audio_stream', { id: socket.id, chunk: chunk });
     });
 
     socket.on('disconnect', () => {
