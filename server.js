@@ -8,7 +8,7 @@ app.use(express.static(__dirname));
 let players = {};
 
 io.on('connection', (socket) => {
-    players[socket.id] = { x: 0, y: 1, z: 0 };
+    players[socket.id] = { x: 0, y: 0.5, z: 0 };
     io.emit('currentPlayers', players);
 
     socket.on('move', (data) => {
