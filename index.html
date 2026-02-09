@@ -3,215 +3,104 @@
 <head>
     <title>Multiplayer Obby</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: #87CEEB; touch-action: none; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        #settings-icon { position: absolute; top: 10px; left: 10px; width: 45px; height: 45px; background: rgba(0,0,0,0.6); border-radius: 8px; cursor: pointer; pointer-events: auto; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; border: 2px solid rgba(255,255,255,0.3); }
-        #settings-menu { position: absolute; top: 65px; left: 10px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 10px; display: none; pointer-events: auto; color: white; border: 1px solid #555; width: 200px; z-index: 20; }
-        #admin-panel { position: absolute; top: 10px; left: 65px; background: #ff4444; color: white; padding: 10px 15px; border-radius: 5px; pointer-events: auto; font-weight: bold; cursor: pointer; border: none; box-shadow: 0 4px #990000; }
-        #joystick-wrapper { position: absolute; bottom: 40px; left: 40px; width: 240px; height: 240px; background: rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; touch-action: none; }
-        #joystick-stick { position: absolute; top: 60px; left: 60px; width: 120px; height: 120px; background: white; border-radius: 50%; box-shadow: 0 0 15px rgba(0,0,0,0.3); pointer-events: none; }
-        #jump-btn { position: absolute; bottom: 40px; right: 40px; width: 120px; height: 120px; background: #28a745; border-radius: 50%; border: 4px solid white; pointer-events: auto; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; }
-        #stage-info { position: absolute; top: 15px; width: 100%; text-align: center; color: white; font-size: 38px; font-weight: 900; text-shadow: 3px 3px #000; }
-        #coin-info { position: absolute; top: 70px; width: 100%; text-align: center; color: #ffcc00; font-size: 24px; font-weight: bold; }
-        #admin-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); padding: 25px; border-radius: 12px; display: none; pointer-events: auto; color: white; border: 2px solid #ff4444; width: 380px; z-index: 100; text-align: center; }
-        .menu-opt { width: 100%; margin: 8px 0; padding: 12px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        #cmd-row { display: flex; gap: 5px; margin-bottom: 10px; }
-        #cmd-box, #new-cmd-box { flex-grow: 1; padding: 10px; background: #111; color: #0f0; border: 1px solid #444; border-radius: 4px; font-family: monospace; }
-        #cmd-run, #add-cmd-btn { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: #87CEEB; }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; pointer-events: none; }
+        #chat { position: absolute; bottom: 10px; left: 10px; width: 250px; height: 150px; background: rgba(0,0,0,0.5); color: white; padding: 5px; border-radius: 5px; pointer-events: auto; }
+        #chat-messages { height: 120px; overflow-y: auto; font-size: 14px; }
+        #chat-input { width: 100%; background: none; border: 1px solid white; color: white; outline: none; }
     </style>
 </head>
 <body>
-    <div id="ui-layer">
-        <div id="stage-info">STAGE 1</div>
-        <div id="coin-info">💰 Coins: <span id="coin-val">0</span></div>
-        <div id="settings-icon">⚙️</div>
-        <div id="settings-menu">
-            <input type="text" id="username-input" placeholder="Username" maxlength="20">
-            <button id="save-username" style="width:100%; margin-top:5px;">SAVE</button>
-            <button onclick="exportSave()" style="margin-top:10px; width:100%;">EXPORT DATA</button>
-            <button onclick="importSave()" style="margin-top:5px; width:100%;">IMPORT DATA</button>
-        </div>
-        <button id="admin-panel">⚡ ADMIN</button>
-        <div id="admin-menu">
-            <h3 style="color:#ff4444">SUPER ADMIN CONSOLE</h3>
-            <div id="cmd-row"><input type="text" id="cmd-box" placeholder="Run command..."><button id="cmd-run">RUN</button></div>
-            <div id="cmd-row" style="border-top: 1px solid #444; padding-top: 10px;"><input type="text" id="new-cmd-box" placeholder="Add: [keyword]:[action]"><button id="add-cmd-btn">ADD</button></div>
-            <button class="menu-opt" id="admin-fly">FLY: OFF</button>
-            <button class="menu-opt" style="background:#cc0000;" onclick="this.parentElement.style.display='none'">CLOSE</button>
-        </div>
-        <div id="joystick-wrapper"><div id="joystick-stick"></div></div>
-        <div id="jump-btn">JUMP</div>
+    <div id="ui">
+        <h1>OBBY WORLD</h1>
+        <p>Coins: <span id="coins">0</span></p>
+    </div>
+    <div id="chat">
+        <div id="chat-messages"></div>
+        <input type="text" id="chat-input" placeholder="Press Enter to chat...">
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         const socket = io();
-        let scene, camera, renderer, myMesh, nametag;
-        let players = {}, platforms = [];
-        let velocity = new THREE.Vector3(), canJump = false;
-        let joyPos = { x: 0, y: 0 }, isTouchingJoy = false;
-        let lastCheckpoint = new THREE.Vector3(0, 5, 0);
-        let coins = parseInt(localStorage.getItem('coins')) || 0;
-        let currentStage = parseInt(localStorage.getItem('stage')) || 1;
-        let visited = new Set(JSON.parse(localStorage.getItem('visited')) || []);
-        let customCommands = JSON.parse(localStorage.getItem('customCmds')) || {};
-        let moveSpeed = 0.18, isFlying = false, gravity = -0.01, camRotation = { x: 0, y: 0 }, isPanning = false;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-        function saveProgress() {
-            localStorage.setItem('coins', coins);
-            localStorage.setItem('stage', currentStage);
-            localStorage.setItem('visited', JSON.stringify(Array.from(visited)));
-            localStorage.setItem('customCmds', JSON.stringify(customCommands));
+        // Lighting
+        const light = new THREE.AmbientLight(0x404040); scene.add(light);
+        const dLight = new THREE.DirectionalLight(0xffffff, 1); dLight.position.set(0, 10, 5); scene.add(dLight);
+
+        // Player Cube
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+        const player = new THREE.Mesh(geometry, material);
+        player.position.y = 1;
+        scene.add(player);
+
+        // Platforms
+        const platforms = [];
+        for(let i=0; i<10; i++) {
+            const plat = new THREE.Mesh(new THREE.BoxGeometry(3, 0.5, 3), new THREE.MeshPhongMaterial({color: 0x999999}));
+            plat.position.set(0, 0, -i * 5);
+            scene.add(plat);
+            platforms.push(plat);
         }
 
-        function exportSave() {
-            const data = btoa(JSON.stringify({ coins, currentStage, visited: Array.from(visited), customCommands }));
-            prompt("Copy your save code:", data);
-        }
+        camera.position.z = 5;
+        camera.position.y = 5;
 
-        function importSave() {
-            const code = prompt("Paste your save code:");
-            if(code) {
-                try {
-                    const data = JSON.parse(atob(code));
-                    coins = data.coins; currentStage = data.currentStage;
-                    visited = new Set(data.visited); customCommands = data.customCommands;
-                    saveProgress(); location.reload();
-                } catch(e) { alert("Invalid code!"); }
-            }
-        }
+        // Movement
+        const keys = {};
+        window.addEventListener('keydown', e => keys[e.key] = true);
+        window.addEventListener('keyup', e => keys[e.key] = false);
 
-        function createNameTag(name) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 512; canvas.height = 128;
-            ctx.fillStyle = 'white'; ctx.font = 'bold 80px Arial'; ctx.textAlign = 'center';
-            ctx.strokeStyle = 'black'; ctx.lineWidth = 6;
-            ctx.strokeText(name, 256, 90); ctx.fillText(name, 256, 90);
-            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas) }));
-            sprite.scale.set(3, 0.75, 1); sprite.position.y = 1.3;
-            return sprite;
-        }
+        let otherPlayers = {};
 
-        function init() {
-            scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-            scene.add(new THREE.AmbientLight(0x606060));
-            const light = new THREE.DirectionalLight(0xffffff, 1); light.position.set(10, 20, 10); scene.add(light);
-
-            for(let i=0; i<50; i++) {
-                const isCheck = i % 5 === 0;
-                const plat = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.7, 4.5), new THREE.MeshPhongMaterial({ color: isCheck?0x00ffff:(i%2?0x999999:0x228B22) }));
-                plat.position.set(Math.sin(i*0.5)*4, 0, -i*8);
-                plat.userData = { id: i, checkpoint: isCheck, stage: Math.floor(i/5)+1 };
-                scene.add(plat); platforms.push(plat);
-                if(isCheck && plat.userData.stage === currentStage) lastCheckpoint.copy(plat.position).y += 5;
-            }
-
-            myMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshPhongMaterial({ color: 0x00ff00 }));
-            myMesh.position.copy(lastCheckpoint); scene.add(myMesh);
-            document.getElementById('coin-val').innerText = coins;
-            document.getElementById('stage-info').innerText = "STAGE " + currentStage;
-
-            const wrap = document.getElementById('joystick-wrapper');
-            const stick = document.getElementById('joystick-stick');
+        function animate() {
+            requestAnimationFrame(animate);
             
-            wrap.addEventListener('touchstart', (e) => { isTouchingJoy = true; e.preventDefault(); }, {passive: false});
-            window.addEventListener('touchmove', (e) => {
-                if(!isTouchingJoy) return;
-                const r = wrap.getBoundingClientRect();
-                const touch = e.touches[0];
-                let dx = touch.clientX - (r.left + 120), dy = touch.clientY - (r.top + 120);
-                const angle = Math.atan2(dy, dx);
-                const visualDist = Math.min(Math.sqrt(dx*dx + dy*dy), 100); 
-                joyPos.x = (dx / 120); joyPos.y = (dy / 120);
-                stick.style.transform = `translate(${Math.cos(angle)*visualDist}px, ${Math.sin(angle)*visualDist}px)`;
-            }, {passive: false});
-            window.addEventListener('touchend', () => { isTouchingJoy = false; joyPos = {x:0, y:0}; stick.style.transform = 'translate(0,0)'; });
+            if(keys['ArrowUp'] || keys['w']) player.position.z -= 0.1;
+            if(keys['ArrowDown'] || keys['s']) player.position.z += 0.1;
+            if(keys['ArrowLeft'] || keys['a']) player.position.x -= 0.1;
+            if(keys['ArrowRight'] || keys['d']) player.position.x += 0.1;
 
-            window.addEventListener('touchstart', (e) => { if(e.touches[0].clientX > window.innerWidth/2) isPanning = true; });
-            window.addEventListener('touchmove', (e) => { if(isPanning && e.touches.length === 1) { camRotation.y -= e.movementX * 0.005; camRotation.x = Math.max(-1.2, Math.min(1.2, camRotation.x - e.movementY * 0.005)); } });
-            window.addEventListener('touchend', () => isPanning = false);
+            camera.position.x = player.position.x;
+            camera.position.z = player.position.z + 5;
+            camera.lookAt(player.position);
 
-            function animate() {
-                requestAnimationFrame(animate);
-                const forward = new THREE.Vector3(0,0,-1).applyAxisAngle(new THREE.Vector3(0,1,0), camRotation.y);
-                const right = new THREE.Vector3(1,0,0).applyAxisAngle(new THREE.Vector3(0,1,0), camRotation.y);
-                myMesh.position.add(forward.multiplyScalar(-joyPos.y * moveSpeed));
-                myMesh.position.add(right.multiplyScalar(joyPos.x * moveSpeed));
-                
-                if(!isFlying) {
-                    velocity.y += gravity; myMesh.position.y += velocity.y;
-                    let pBox = new THREE.Box3().setFromObject(myMesh);
-                    platforms.forEach(p => {
-                        let platBox = new THREE.Box3().setFromObject(p);
-                        if(pBox.intersectsBox(platBox) && velocity.y <= 0 && myMesh.position.y >= p.position.y) {
-                            myMesh.position.y = p.position.y + 0.85; velocity.y = 0; canJump = true;
-                            if(!visited.has(p.userData.id)) {
-                                visited.add(p.userData.id); coins += p.userData.checkpoint ? 50 : 5;
-                                document.getElementById('coin-val').innerText = coins;
-                                saveProgress();
-                            }
-                            if(p.userData.checkpoint) {
-                                currentStage = p.userData.stage;
-                                lastCheckpoint.set(p.position.x, p.position.y + 5, p.position.z);
-                                document.getElementById('stage-info').innerText = "STAGE " + currentStage;
-                                saveProgress();
-                            }
-                        }
-                    });
-                    if(myMesh.position.y < -20) { myMesh.position.copy(lastCheckpoint); velocity.y = 0; }
-                }
-                const camOffset = new THREE.Vector3(0, 7, 15).applyAxisAngle(new THREE.Vector3(1,0,0), camRotation.x).applyAxisAngle(new THREE.Vector3(0,1,0), camRotation.y);
-                camera.position.copy(myMesh.position).add(camOffset); camera.lookAt(myMesh.position);
-                socket.emit('move', { x: myMesh.position.x, y: myMesh.position.y, z: myMesh.position.z });
-                renderer.render(scene, camera);
-            }
-            animate();
+            socket.emit('move', { x: player.position.x, y: player.position.y, z: player.position.z });
+            renderer.render(scene, camera);
         }
 
-        document.getElementById('save-username').onclick = () => { 
-            let n = document.getElementById('username-input').value.trim() || 'Guest'; 
-            if(nametag) myMesh.remove(nametag); nametag=createNameTag(n); myMesh.add(nametag); 
-            socket.emit('join', {name:n}); 
-            document.getElementById('settings-menu').style.display = 'none';
-        };
-
-        socket.on('currentPlayers', ps => { 
-            Object.keys(ps).forEach(id => { 
-                if(!players[id] && id !== socket.id) {
-                    players[id] = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhongMaterial({color:0xff3333}));
-                    players[id].add(createNameTag(ps[id].name || 'Guest'));
-                    scene.add(players[id]);
+        socket.on('currentPlayers', (players) => {
+            Object.keys(players).forEach(id => {
+                if(id !== socket.id) {
+                    const p = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xff0000}));
+                    p.position.set(players[id].x, players[id].y, players[id].z);
+                    scene.add(p);
+                    otherPlayers[id] = p;
                 }
             });
         });
 
-        socket.on('playerMoved', d => { if(players[d.id]) players[d.id].position.set(d.x, d.y, d.z); });
-        socket.on('playerDisconnected', id => { if(players[id]){ scene.remove(players[id]); delete players[id]; } });
+        socket.on('playerMoved', (data) => {
+            if(otherPlayers[data.id]) {
+                otherPlayers[data.id].position.set(data.x, data.y, data.z);
+            }
+        });
 
-        document.getElementById('cmd-run').onclick = () => {
-            const cmd = document.getElementById('cmd-box').value.toLowerCase();
-            if(customCommands[cmd]) eval(customCommands[cmd]);
-            if(cmd.includes("fly")) isFlying = !isFlying;
-            document.getElementById('cmd-box').value = "";
-        };
+        socket.on('playerDisconnected', (id) => {
+            if(otherPlayers[id]) {
+                scene.remove(otherPlayers[id]);
+                delete otherPlayers[id];
+            }
+        });
 
-        document.getElementById('add-cmd-btn').onclick = () => {
-            const [k, a] = document.getElementById('new-cmd-box').value.split(":");
-            if(k && a) { customCommands[k.trim().toLowerCase()] = a.trim(); saveProgress(); alert("Added!"); }
-            document.getElementById('new-cmd-box').value = "";
-        };
-
-        document.getElementById('admin-panel').onclick = () => { if(prompt("Admin Password:") === "Blue@7077") document.getElementById('admin-menu').style.display='block'; };
-        document.getElementById('jump-btn').ontouchstart = (e) => { e.preventDefault(); if(isFlying) myMesh.position.y += 1.5; else if(canJump) { velocity.y = 0.25; canJump = false; } };
-        document.getElementById('settings-icon').onclick = () => { let m = document.getElementById('settings-menu'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; };
-
-        init();
+        animate();
     </script>
 </body>
 </html>
