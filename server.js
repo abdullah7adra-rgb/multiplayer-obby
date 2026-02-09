@@ -8,7 +8,7 @@ app.use(express.static(__dirname));
 let players = {};
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
-        players[socket.id] = { name: data.name, x: 0, y: 0, z: 0 };
+        players[socket.id] = { name: data.name, x: 0, y: 0, z: 0, color: 0xff3333 };
         io.emit('currentPlayers', players);
     });
     socket.on('move', (data) => {
@@ -17,8 +17,8 @@ io.on('connection', (socket) => {
             socket.broadcast.emit('playerMoved', { id: socket.id, ...data });
         }
     });
+    socket.on('colorChange', (color) => { if(players[socket.id]) players[socket.id].color = color; });
     socket.on('chatMessage', (msg) => { if(players[socket.id]) io.emit('newMessage', { name: players[socket.id].name, text: msg }); });
-    socket.on('voiceData', (data) => { socket.broadcast.emit('voiceStream', { id: socket.id, buffer: data }); });
     socket.on('disconnect', () => { delete players[socket.id]; io.emit('playerDisconnected', socket.id); });
 });
 http.listen(process.env.PORT || 3000);
