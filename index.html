@@ -34,31 +34,25 @@
             <button id="start-btn" class="btn">Join & Enable Mic</button>
             <div id="error-msg" style="color: #ff4444; margin-top: 10px;"></div>
         </div>
-
         <div id="mic-controls">
             <button id="mute-btn" class="btn">Mute Mic</button>
         </div>
-
         <div id="chat-container">
             <div id="chat-messages"></div>
             <input type="text" id="chat-input" placeholder="Press Enter to chat...">
         </div>
     </div>
-
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
     <script>
         const socket = io();
         let scene, camera, renderer, myMesh;
         let players = {};
         let localStream, mediaRecorder;
         let isMuted = false;
-
         document.getElementById('start-btn').onclick = async () => {
             const name = document.getElementById('username-input').value.trim();
             if (name.length < 3 || name.length > 20) return;
-
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(localStream);
@@ -71,7 +65,6 @@
                 alert("Microphone access is required!");
             }
         };
-
         const muteBtn = document.getElementById('mute-btn');
         muteBtn.onclick = () => {
             isMuted = !isMuted;
@@ -79,7 +72,6 @@
             muteBtn.innerText = isMuted ? "Unmute Mic" : "Mute Mic";
             muteBtn.classList.toggle('muted', isMuted);
         };
-
         socket.on('usernameResult', (data) => {
             if (data.success) {
                 document.getElementById('login-ui').style.display = 'none';
@@ -88,7 +80,6 @@
                 initGame(data.name);
             }
         });
-
         function createNameTag(name) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -104,34 +95,27 @@
             sprite.position.y = 1.2;
             return sprite;
         }
-
         function initGame(username) {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
-
             scene.add(new THREE.GridHelper(100, 50, 0x444444, 0x444444));
-            
             const geo = new THREE.BoxGeometry();
             const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
             myMesh = new THREE.Mesh(geo, mat);
             myMesh.add(createNameTag(username));
             scene.add(myMesh);
-
             camera.position.set(0, 5, 10);
             camera.lookAt(myMesh.position);
-
             function animate() {
                 requestAnimationFrame(animate);
                 renderer.render(scene, camera);
             }
             animate();
-
             socket.emit('join', { name: username });
         }
-
         const chatInput = document.getElementById('chat-input');
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && chatInput.value.trim()) {
@@ -139,19 +123,16 @@
                 chatInput.value = '';
             }
         });
-
         socket.on('newMessage', (data) => {
             const div = document.createElement('div');
             div.innerHTML = `<b>${data.name}:</b> ${data.text}`;
             document.getElementById('chat-messages').appendChild(div);
         });
-
         socket.on('voiceStream', (data) => {
             const blob = new Blob([data.buffer], { type: 'audio/webm' });
             const audio = new Audio(URL.createObjectURL(blob));
             audio.play();
         });
-
         socket.on('currentPlayers', (serverPlayers) => {
             Object.keys(serverPlayers).forEach(id => {
                 if (!players[id] && id !== socket.id) {
@@ -162,7 +143,6 @@
                 }
             });
         });
-
         socket.on('playerDisconnected', (id) => {
             if (players[id]) { scene.remove(players[id]); delete players[id]; }
         });
