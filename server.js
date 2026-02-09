@@ -4,18 +4,17 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
+app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
 app.use(express.static(__dirname));
 
 let players = {};
 
 io.on('connection', (socket) => {
+    // When someone joins, send them the list of all current players
+    // And notify others about the new player
     socket.on('join', (data) => {
         players[socket.id] = { name: data.name || 'Guest', x: 0, y: 5, z: 0 };
-        io.emit('currentPlayers', players);
+        io.emit('currentPlayers', players); 
     });
 
     socket.on('move', (data) => {
@@ -40,4 +39,4 @@ io.on('connection', (socket) => {
     });
 });
 
-http.listen(process.env.PORT || 3000, () => console.log('Server active on port 3000'));
+http.listen(process.env.PORT || 3000, () => console.log('Server running on 3000'));
