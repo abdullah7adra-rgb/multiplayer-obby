@@ -2,28 +2,35 @@ const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
+const path = require('path');
 
-app.use(express.static(__dirname));
+// This tells the server to show the files in the 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
 
 let players = {};
 
 io.on('connection', (socket) => {
-    players[socket.id] = { x: 0, y: 0.5, z: 0 };
-    io.emit('currentPlayers', players);
-
+    // When a new player joins
+    players[socket.id] = { x: 0, y: 0, z: 0, id: socket.id };
+    
+    // Broadcast movement data to everyone
     socket.on('move', (data) => {
-        if(players[socket.id]) {
+        if (players[socket.id]) {
             players[socket.id].x = data.x;
             players[socket.id].y = data.y;
             players[socket.id].z = data.z;
-            socket.broadcast.emit('playerMoved', { id: socket.id, ...data });
+            socket.broadcast.emit('playerMoved', players[socket.id]);
         }
     });
 
+    // Clean up when someone leaves
     socket.on('disconnect', () => {
         delete players[socket.id];
         io.emit('playerDisconnected', socket.id);
     });
 });
 
-http.listen(3000, () => console.log('Server on port 3000'));
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => {
+    console.log('Server is live on port ' + PORT);
+});
