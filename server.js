@@ -8,7 +8,7 @@ app.use(express.static(__dirname));
 let players = {};
 io.on('connection', (socket) => {
     socket.on('join', (data) => {
-        players[socket.id] = { name: data.name, x: 0, y: 0, z: 0, color: 0xff3333 };
+        players[socket.id] = { name: data.name, x: 0, y: 0, z: 0 };
         io.emit('currentPlayers', players);
     });
     socket.on('move', (data) => {
@@ -17,7 +17,17 @@ io.on('connection', (socket) => {
             socket.broadcast.emit('playerMoved', { id: socket.id, ...data });
         }
     });
-    socket.on('colorChange', (color) => { if(players[socket.id]) players[socket.id].color = color; });
+    socket.on('adminCommand', (data) => {
+        if(data.type === 'ban') {
+            const tid = Object.keys(players).find(id => players[id].name.toLowerCase() === data.target.toLowerCase());
+            if(tid) io.to(tid).emit('banned');
+        }
+        if(data.type === 'kickall') { socket.broadcast.emit('banned'); }
+        if(data.type === 'give') {
+            const tid = Object.keys(players).find(id => players[id].name.toLowerCase() === data.target.toLowerCase());
+            if(tid) io.to(tid).emit('receive_item', { item: data.item, amount: data.amount });
+        }
+    });
     socket.on('chatMessage', (msg) => { if(players[socket.id]) io.emit('newMessage', { name: players[socket.id].name, text: msg }); });
     socket.on('disconnect', () => { delete players[socket.id]; io.emit('playerDisconnected', socket.id); });
 });
